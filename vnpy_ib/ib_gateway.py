@@ -388,6 +388,37 @@ class IbApi(EWrapper):
 
         self.gateway.on_tick(copy(tick))
 
+    def tickByTickBidAsk(self, reqId: int, time: int, bidPrice: float, askPrice: float,
+                         bidSize: int, askSize: int, tickAttribBidAsk) -> None:
+        super().tickByTickBidAsk(reqId, time, bidPrice, askPrice, bidSize, askSize, tickAttribBidAsk)
+        tick: TickData = self.ticks[reqId]
+
+        dt: datetime = datetime.fromtimestamp(int(time))
+        tick.datetime = self.local_tz.localize(dt)
+        tick.bid_price_1 = bidPrice
+        tick.bid_volume_1 = bidSize
+        tick.ask_price_1 = askPrice
+        tick.ask_volume_1 = askSize
+
+        self.gateway.on_tick(copy(tick))
+
+
+    def tickByTickAllLast(self, reqId: int, tickType: int, time: int, price: float,
+                          size: int, tickAttribLast, exchange: str,
+                          specialConditions: str) -> None:
+        """returns tick-by-tick data for tickType = "Last" or "AllLast" """
+        # super().tickByTickAllLast(reqId, tickType, time, price, size, tickAttribLast, exchange, specialConditions);
+
+        tick: TickData = self.ticks[reqId]
+        dt: datetime = datetime.fromtimestamp(int(time))
+        tick.datetime = self.local_tz.localize(dt)
+        tick.localtime = datetime.now()
+        tick.last_price = price;
+        tick.last_volume = size;
+
+        self.gateway.on_tick(copy(tick))
+
+
     def orderStatus(
         self,
         orderId: OrderId,
@@ -601,7 +632,8 @@ class IbApi(EWrapper):
 
         if not self.account:
             for account_code in accountsList.split(","):
-                self.account = account_code
+                if len(account_code) > 0:
+                    self.account = account_code
 
         self.gateway.write_log(f"当前使用的交易账号为{self.account}")
         self.client.reqAccountUpdates(True, self.account)
@@ -697,7 +729,12 @@ class IbApi(EWrapper):
 
         #  订阅tick数据并创建tick对象缓冲区
         self.reqid += 1
-        self.client.reqMktData(self.reqid, ib_contract, "", False, False, [])
+        # self.client.reqMktData(self.reqid, ib_contract, "", False, False, [])
+        # self.client.reqTickByTickData(self.reqid,ib_contract,"BidAsk",0,True);
+        self.client.reqTickByTickData(self.reqid,ib_contract,"Last",0,True)
+        # self.client.reqTickByTickData(self.reqid,ib_contract,"AllLast",0,True)
+        # self.client.reqTickByTickData(self.reqid,ib_contract,"MidPoint",0,True);
+
 
         tick: TickData = TickData(
             symbol=req.symbol,
@@ -744,6 +781,7 @@ class IbApi(EWrapper):
         self.client.reqIds(1)
 
         order: OrderData = req.create_order_data(str(self.orderid), self.gateway_name)
+        order.__setattr__("islocal", 1)
         self.gateway.on_order(order)
         return order.vt_orderid
 
