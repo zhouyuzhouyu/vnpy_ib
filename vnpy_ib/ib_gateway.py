@@ -413,8 +413,8 @@ class IbApi(EWrapper):
         dt: datetime = datetime.fromtimestamp(int(time))
         tick.datetime = self.local_tz.localize(dt)
         tick.localtime = datetime.now()
-        tick.last_price = price;
-        tick.last_volume = size;
+        tick.last_price = price
+        tick.last_volume = size
 
         self.gateway.on_tick(copy(tick))
 
@@ -731,10 +731,9 @@ class IbApi(EWrapper):
         self.reqid += 1
         # self.client.reqMktData(self.reqid, ib_contract, "", False, False, [])
         # self.client.reqTickByTickData(self.reqid,ib_contract,"BidAsk",0,True);
-        self.client.reqTickByTickData(self.reqid,ib_contract,"Last",0,True)
+        self.client.reqTickByTickData(self.reqid, ib_contract, "Last", 0, True)
         # self.client.reqTickByTickData(self.reqid,ib_contract,"AllLast",0,True)
         # self.client.reqTickByTickData(self.reqid,ib_contract,"MidPoint",0,True);
-
 
         tick: TickData = TickData(
             symbol=req.symbol,
