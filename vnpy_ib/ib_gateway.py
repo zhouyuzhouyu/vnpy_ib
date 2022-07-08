@@ -771,6 +771,10 @@ class IbApi(EWrapper):
         ib_order.totalQuantity = req.volume
         ib_order.account = self.account
 
+        if req.ocaGroup:
+            ib_order.ocaGroup = req.ocaGroup
+            ib_order.ocaType = 1
+
         if req.type == OrderType.LIMIT:
             ib_order.lmtPrice = req.price
         elif req.type == OrderType.STOP:
